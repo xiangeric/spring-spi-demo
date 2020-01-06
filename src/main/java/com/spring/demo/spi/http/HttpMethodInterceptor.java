@@ -21,7 +21,6 @@ public class HttpMethodInterceptor implements MethodInterceptor {
 
     private Map<Method,MethodCache> caches = new ConcurrentHashMap<>(8);
 
-
     public HttpMethodInterceptor(String address){
         if(!address.endsWith("/")){
             address = address + "/";
@@ -30,9 +29,9 @@ public class HttpMethodInterceptor implements MethodInterceptor {
         this.address = address;
     }
 
-
     @Override
     public Object intercept(Object o, Method method, Object[] parameters, MethodProxy methodProxy) throws Throwable {
+        //如果是equals()、hashcode()、toString()则直接调用
         if(ReflectionUtils.isEqualsMethod(method) ||
                 ReflectionUtils.isHashCodeMethod(method) ||
                 ReflectionUtils.isToStringMethod(method) ){
@@ -43,10 +42,14 @@ public class HttpMethodInterceptor implements MethodInterceptor {
         if(caches.containsKey(method)){
             cache = caches.get(method);
         }else{
+            //获得@HttpMethod
             HttpMethod httpMethod = method.getDeclaredAnnotation(HttpMethod.class);
+            //获得全地址
             String subAddress = String.format(address,httpMethod.value());
             Map<String,String> headerMap = null;
+            //获得Header信息
             final HttpHeader[] headers = httpMethod.headers();
+            //存储Header信息
             if(headers!=null && headers.length>0){
                 headerMap = new HashMap<>(8);
                 for(HttpHeader httpHeader:headers){
@@ -56,20 +59,21 @@ public class HttpMethodInterceptor implements MethodInterceptor {
             cache = new MethodCache(subAddress,headerMap);
             caches.put(method,cache);
         }
+
         String json = null;
+        //如果有参数，则转化为json字符串
         if(parameters!=null && parameters.length>0){
             json = HttpUtil.object2Json(parameters[0]);
         }
+        //调用http工具请求接口，这里同时获得方法返回类型以及返回类型中可能
+        //存在泛型情况，如List<User>,那么User为泛型信息
         result = HttpUtil.post(json,cache.address,cache.headers,
                 method.getReturnType(),method.getGenericReturnType());
         return result;
     }
 
-
     @NoArgsConstructor
     static class MethodCache{
-
-
         //指定发送http的地址
         private String address;
 

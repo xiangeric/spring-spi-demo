@@ -1,34 +1,48 @@
 package demo.spring.demo;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spring.demo.spi.SpiSpringApplication;
 import com.spring.demo.spi.entity.User;
+import com.spring.demo.spi.http.service.UserService;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
+@SpringBootTest(classes = SpiSpringApplication.class)
 class DemoApplicationTests {
 
-    public static void main(String[] args) throws Exception{
-//        String jsonString = "[{\"name\":\"chen eric\",\"age\":26},{\"name\":\"liao e\",\"age\":26}]";
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        Method method = DemoApplicationTests.class.getDeclaredMethod("list",null);
-////        System.out.println(method.getGenericReturnType());
-////        ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
-////        Class c = (Class)type.getRawType();
-////        System.out.println(c+"---");
-////        Class genericClazz = (Class)type.getActualTypeArguments()[0];
-////        System.out.println(genericClazz);
-////        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(c, genericClazz);
-//        List<User> list = objectMapper.readValue(jsonString, getJavaType(objectMapper,method.getReturnType(),method.getGenericReturnType()));
+    @Autowired
+    private UserService userService;
+
+
+    @Test
+    public void test(){
+        userService.call();
+        User user = new User("uuu",30);
+        userService.addUser(user);
+        List<User> list = userService.getAllUsers();
+        list.forEach(System.out::println);
+        User user1 = userService.getUser("uuu");
+        System.out.println(user1);
+        Set<User> set = userService.getSetUsers();
+        Map<String, User> mapUser = userService.getMapUser();
+        mapUser.forEach((k,v) ->{
+            System.out.println("k="+k+",v"+v);
+        });
+        String rawJson = userService.getJson();
+        System.out.println(rawJson);
+        User[] users = userService.getUserArray();
+        for (int i = 0; i <users.length ; i++) {
+            System.out.println(users[i]);
+        }
+
+
+    }
+
+    public static void main(String[] args) {
 
     }
 

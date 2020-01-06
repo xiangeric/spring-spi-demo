@@ -7,11 +7,8 @@ import java.lang.annotation.*;
 @Documented
 @Inherited //表明CGLIB子类方法可以继承
 public @interface HttpMethod {
-
     //子地址
     String value();
 
     HttpHeader[] headers() default {};
-
-
 }

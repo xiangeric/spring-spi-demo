@@ -28,7 +28,6 @@ public class HttpUtil {
 
     private static final String JSON_CONTENT_TYPE = "application/json";
 
-
     public static Object post(String json, String address, Map<String,String> headers,
                               Class<?> returnType, Type type){
         log.info("-------------------------");
@@ -39,7 +38,12 @@ public class HttpUtil {
             try {
                 String resultJson = EntityUtils.toString(httpResponse.getEntity());
                 log.info("-- response:"+resultJson);
-                if(returnType!=null){
+                //如果方法不为void类型，尝试解析响应json字符串
+                if(returnType!=null && !Void.TYPE.equals(returnType)){
+                    //如果是String类型，则直接返回
+                    if(String.class.equals(returnType)){
+                        return resultJson;
+                    }
                     return json2Object(resultJson,returnType,type);
                 }
             } catch (IOException e) {
@@ -51,16 +55,19 @@ public class HttpUtil {
     }
 
 
+    //建立http client，发送http请求，返回响应
     public static HttpResponse doPost(String json, String address, Map<String,String> map){
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpPost postMethod = new HttpPost(address);
         try {
+            //如果有请求参数
             if(!StringUtils.isEmpty(json)){
                 StringEntity entity = new StringEntity(json);
                 entity.setContentEncoding(UTF_8);
                 entity.setContentType(JSON_CONTENT_TYPE);
                 postMethod.setEntity(entity);
             }
+            //添加header
             if(map!=null && !map.isEmpty()){
                 map.forEach((k,v) ->{
                     postMethod.addHeader(k,v);
@@ -74,8 +81,7 @@ public class HttpUtil {
         return null;
     }
 
-
-
+    //判断响应状态是否为200
     public static boolean isOk(HttpResponse httpResponse){
         if(httpResponse != null){
             if(httpResponse.getStatusLine() != null
@@ -90,6 +96,7 @@ public class HttpUtil {
         return false;
     }
 
+    // parse object to json for sending
     public static String object2Json(Object o){
         String json = null;
         if(o !=null){
@@ -109,6 +116,7 @@ public class HttpUtil {
         if(json!=null && returnType!=null){
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
+                //如果是容器类型，需要转换，否则会默认LinkedHashMap
                 if(isContainClass(returnType) && type!=null && type instanceof ParameterizedType){
                     JavaType javaType = getJavaType(objectMapper,returnType,type);
                     result = objectMapper.readValue(json, javaType);
@@ -124,23 +132,27 @@ public class HttpUtil {
     }
 
 
+    //判断是否为容器类型，容器类型需要对泛型进行处理
     private static boolean isContainClass(Class clazz){
         return List.class.equals(clazz) ||
                 Map.class.equals(clazz)||
                 Set.class.equals(clazz);
     }
 
+    //获得容器class以及泛型类型，从而得到对应的JavaType
     private static JavaType getJavaType(ObjectMapper objectMapper,
                                         Class<?> containClass, Type type) throws Exception{
         if(type ==null || !(type instanceof ParameterizedType)){
             throw new Exception("type should not be null");
         }
         ParameterizedType parameterizedType = (ParameterizedType) type;
+        //List<User>, 则genericTypes[0] = User.class
         Type[] genericTypes = parameterizedType.getActualTypeArguments();
         Class[] parameterClasses = new Class[genericTypes.length];
         for(int i=0;i<genericTypes.length;i++){
             parameterClasses[i] = (Class) genericTypes[i];
         }
+        //构建JavaType
         JavaType javaType = objectMapper.getTypeFactory()
                 .constructParametricType(containClass, parameterClasses);
         return javaType;
