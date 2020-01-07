@@ -5,7 +5,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.spring.demo.com/schema/http http://www.spring.demo.com/schema/http.xsd">
 
-    <http:json id="httpRequest"
+    <http:json id="userService"
                  targetClass="com.spring.demo.spi.http.service.UserService"
                  address="${http.request.address}"/>
 

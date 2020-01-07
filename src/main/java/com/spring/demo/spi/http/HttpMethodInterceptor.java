@@ -61,13 +61,14 @@ public class HttpMethodInterceptor implements MethodInterceptor {
         }
 
         String json = null;
-        //如果有参数，则转化为json字符串
+        //如果有参数，则取第一个参数作为请求参数
+        Object postObject = null;
         if(parameters!=null && parameters.length>0){
-            json = HttpUtil.object2Json(parameters[0]);
+            postObject = parameters[0];
         }
         //调用http工具请求接口，这里同时获得方法返回类型以及返回类型中可能
         //存在泛型情况，如List<User>,那么User为泛型信息
-        result = HttpUtil.post(json,cache.address,cache.headers,
+        result = HttpUtil.post(postObject,cache.address,cache.headers,
                 method.getReturnType(),method.getGenericReturnType());
         return result;
     }
